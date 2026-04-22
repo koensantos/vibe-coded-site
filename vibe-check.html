@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calc</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: #f5f0e8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: rgba(255, 90, 50, 0.07);
+    pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    left: -15%;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: rgba(30, 30, 200, 0.05);
+    pointer-events: none;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .brand {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #aaa49a;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .calculator {
+    background: #1a1a1a;
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow:
+      0 2px 0 #333,
+      0 40px 80px rgba(0,0,0,0.35),
+      0 8px 24px rgba(0,0,0,0.2);
+  }
+
+  .display {
+    background: #111;
+    border-radius: 16px;
+    padding: 16px 20px 14px;
+    margin-bottom: 20px;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .display-expr {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 6px;
+    min-height: 18px;
+    letter-spacing: 0.03em;
+    text-align: right;
+    word-break: break-all;
+    max-width: 100%;
+  }
+
+  .display-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: #f5f0e8;
+    letter-spacing: -0.02em;
+    text-align: right;
+    word-break: break-all;
+    line-height: 1;
+    transition: font-size 0.1s;
+  }
+
+  .display-value.small { font-size: 24px; }
+  .display-value.xsmall { font-size: 18px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  button {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.08s, filter 0.08s;
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:active { transform: scale(0.93); filter: brightness(0.9); }
+
+  .btn-num {
+    background: #2a2a2a;
+    color: #f5f0e8;
+    box-shadow: 0 2px 0 #111;
+  }
+
+  .btn-num:hover { background: #333; }
+
+  .btn-zero {
+    grid-column: span 2;
+    justify-content: flex-start;
+    padding-left: 24px;
+  }
+
+  .btn-op {
+    background: #ff5a32;
+    color: #fff;
+    box-shadow: 0 2px 0 #c03a1e;
+    font-size: 20px;
+  }
+
+  .btn-op:hover { background: #ff6b45; }
+
+  .btn-fn {
+    background: #2f2f2f;
+    color: #aaa49a;
+    font-size: 14px;
+    box-shadow: 0 2px 0 #111;
+    letter-spacing: 0.04em;
+  }
+
+  .btn-fn:hover { background: #383838; }
+
+  .btn-eq {
+    background: #f5f0e8;
+    color: #1a1a1a;
+    box-shadow: 0 2px 0 #c8c3bc;
+    font-size: 22px;
+  }
+
+  .btn-eq:hover { background: #fff; }
+
+  .btn-clear {
+    background: #2f2f2f;
+    color: #ff5a32;
+    box-shadow: 0 2px 0 #111;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+  }
+
+  .btn-clear:hover { background: #383838; }
+
+  /* Share section */
+  .share-bar {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .share-input {
+    flex: 1;
+    background: #1a1a1a;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #666;
+    outline: none;
+    cursor: text;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .share-input.copied {
+    color: #4caf50;
+    transition: color 0.2s;
+  }
+
+  .share-btn {
+    background: #ff5a32;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.08s;
+    box-shadow: 0 2px 0 #c03a1e;
+  }
+
+  .share-btn:hover { background: #ff6b45; }
+  .share-btn:active { transform: scale(0.96); }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a1a;
+    color: #f5f0e8;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 99px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+  }
+
+  .display-value.pop { animation: pop 0.15s ease; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="brand">✦ Calc ✦</div>
+
+  <div class="calculator">
+    <div class="display">
+      <div class="display-expr" id="expr"></div>
+      <div class="display-value" id="display">0</div>
+    </div>
+
+    <div class="grid">
+      <button class="btn-clear" onclick="clearAll()">AC</button>
+      <button class="btn-fn" onclick="toggleSign()">+/−</button>
+      <button class="btn-fn" onclick="percent()">%</button>
+      <button class="btn-op" onclick="setOp('/')">÷</button>
+
+      <button class="btn-num" onclick="input('7')">7</button>
+      <button class="btn-num" onclick="input('8')">8</button>
+      <button class="btn-num" onclick="input('9')">9</button>
+      <button class="btn-op" onclick="setOp('*')">×</button>
+
+      <button class="btn-num" onclick="input('4')">4</button>
+      <button class="btn-num" onclick="input('5')">5</button>
+      <button class="btn-num" onclick="input('6')">6</button>
+      <button class="btn-op" onclick="setOp('-')">−</button>
+
+      <button class="btn-num" onclick="input('1')">1</button>
+      <button class="btn-num" onclick="input('2')">2</button>
+      <button class="btn-num" onclick="input('3')">3</button>
+      <button class="btn-op" onclick="setOp('+')">+</button>
+
+      <button class="btn-num btn-zero" onclick="input('0')">0</button>
+      <button class="btn-num" onclick="inputDot()">.</button>
+      <button class="btn-eq" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <div class="share-bar">
+    <input class="share-input" id="share-input" readonly placeholder="press = to generate a share link" />
+    <button class="share-btn" onclick="copyLink()">Copy link</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let current = '0';
+let prev = null;
+let op = null;
+let justCalc = false;
+let exprDisplay = '';
+
+function updateDisplay(val) {
+  const el = document.getElementById('display');
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+
+  const str = String(val);
+  el.textContent = str;
+  el.className = 'display-value pop';
+  if (str.length > 12) el.classList.add('xsmall');
+  else if (str.length > 9) el.classList.add('small');
+}
+
+function input(digit) {
+  if (justCalc) { current = digit; justCalc = false; exprDisplay = ''; }
+  else if (current === '0') current = digit;
+  else if (current.length < 14) current += digit;
+  updateDisplay(current);
+  updateShareInput('');
+}
+
+function inputDot() {
+  if (justCalc) { current = '0.'; justCalc = false; exprDisplay = ''; }
+  else if (!current.includes('.')) current += '.';
+  updateDisplay(current);
+}
+
+function setOp(o) {
+  if (op && !justCalc) calculate(true);
+  prev = parseFloat(current);
+  op = o;
+  justCalc = false;
+  const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+  exprDisplay = `${formatNum(prev)} ${symbols[o]}`;
+  document.getElementById('expr').textContent = exprDisplay;
+  current = '0';
+  updateShareInput('');
+}
+
+function calculate(chained) {
+  if (op === null || prev === null) return;
+  const a = prev, b = parseFloat(current);
+  const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+  let result;
+  if (op === '+') result = a + b;
+  else if (op === '-') result = a - b;
+  else if (op === '*') result = a * b;
+  else if (op === '/') result = b === 0 ? 'Error' : a / b;
+
+  const expr = `${formatNum(a)} ${symbols[op]} ${formatNum(b)} =`;
+  document.getElementById('expr').textContent = expr;
+
+  if (!chained) {
+    exprDisplay = expr;
+    justCalc = true;
+    op = null;
+    prev = null;
+  }
+
+  const display = result === 'Error' ? 'Error' : formatNum(result);
+  current = result === 'Error' ? '0' : String(result);
+  updateDisplay(display);
+
+  if (!chained) {
+    const hash = btoa(JSON.stringify({ a, op: op || symbols[op] || op, b, result, expr }));
+    const url = `${location.href.split('#')[0]}#${encodeURIComponent(btoa(JSON.stringify({ expr, result: display })))}`;
+    document.getElementById('share-input').value = url;
+  }
+}
+
+function updateShareInput(val) {
+  document.getElementById('share-input').value = val;
+  document.getElementById('share-input').placeholder = 'press = to generate a share link';
+}
+
+function formatNum(n) {
+  if (typeof n !== 'number') return n;
+  const s = parseFloat(n.toPrecision(10));
+  return String(s);
+}
+
+function clearAll() {
+  current = '0'; prev = null; op = null; justCalc = false; exprDisplay = '';
+  document.getElementById('expr').textContent = '';
+  updateDisplay('0');
+  updateShareInput('');
+}
+
+function toggleSign() {
+  if (current !== '0') {
+    current = current.startsWith('-') ? current.slice(1) : '-' + current;
+    updateDisplay(current);
+  }
+}
+
+function percent() {
+  current = String(parseFloat(current) / 100);
+  updateDisplay(current);
+}
+
+function copyLink() {
+  const val = document.getElementById('share-input').value;
+  if (!val || val === '') { showToast('Press = first to generate a link'); return; }
+  navigator.clipboard.writeText(val).then(() => {
+    const inp = document.getElementById('share-input');
+    inp.classList.add('copied');
+    setTimeout(() => inp.classList.remove('copied'), 1500);
+    showToast('Link copied!');
+  }).catch(() => {
+    document.getElementById('share-input').select();
+    document.execCommand('copy');
+    showToast('Link copied!');
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Load from share link
+function loadFromHash() {
+  try {
+    const hash = decodeURIComponent(location.hash.slice(1));
+    if (!hash) return;
+    const data = JSON.parse(atob(hash));
+    if (data.result !== undefined) {
+      document.getElementById('expr').textContent = data.expr || '';
+      updateDisplay(data.result);
+      current = String(data.result);
+      document.getElementById('share-input').value = location.href;
+      showToast('Loaded shared calculation');
+    }
+  } catch(e) {}
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (e.key >= '0' && e.key <= '9') input(e.key);
+  else if (e.key === '.') inputDot();
+  else if (e.key === '+') setOp('+');
+  else if (e.key === '-') setOp('-');
+  else if (e.key === '*') setOp('*');
+  else if (e.key === '/') { e.preventDefault(); setOp('/'); }
+  else if (e.key === 'Enter' || e.key === '=') calculate();
+  else if (e.key === 'Escape') clearAll();
+  else if (e.key === 'Backspace') {
+    if (current.length > 1) current = current.slice(0, -1);
+    else current = '0';
+    updateDisplay(current);
+  }
+});
+
+loadFromHash();
+</script>
+</body>
+</html>
